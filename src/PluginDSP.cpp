@@ -16,25 +16,33 @@ START_NAMESPACE_DISTRHO
 
 class ReNooicePlugin : public Plugin
 {
+    // scaling used for denoise processing
     static constexpr const uint32_t kDenoiseScaling = std::numeric_limits<short>::max();
     static constexpr const float kDenoiseScalingInv = 1.f / kDenoiseScaling;
 
+    // denoise block size
     const uint32_t denoiseFrameSize = static_cast<uint32_t>(rnnoise_get_frame_size());
     const uint32_t denoiseFrameSizeF = denoiseFrameSize * sizeof(float);
 
+    // denoise handle, keep it const so we never modify it
     DenoiseState* const denoise = rnnoise_create(nullptr);
 
+    // buffers for latent processing
     float* bufferIn;
     float* bufferOut;
-
     HeapRingBuffer ringBufferDry;
     HeapRingBuffer ringBufferOut;
-
-    uint32_t gracePeriodInFrames = 0;
-    uint32_t numFramesUntilGracePeriodOver = 0;
-
     uint32_t bufferInPos;
+
+    // whether we received enough latent audio frames
     bool processing;
+
+    // translate Grace Period param (ms) into 48kHz frames
+    // updated when param changes
+    uint32_t gracePeriodInFrames = 0;
+
+    // assigned to gracePeriodInFrames when going mute
+    uint32_t numFramesUntilGracePeriodOver = 0;
 
     // smooth bypass
     LinearValueSmoother dryValue;
@@ -42,6 +50,7 @@ class ReNooicePlugin : public Plugin
     // smooth mute/unmute
     LinearValueSmoother muteValue;
 
+    // our parameter list
     enum Parameters {
         kParamBypass,
         kParamThreshold,
@@ -55,6 +64,8 @@ class ReNooicePlugin : public Plugin
     };
     float parameters[kParamCount] = {};
 
+    // denoise statistics
+    // mostly just for testing
     struct {
         float vads[128];
         float avg, min, max;
@@ -123,6 +134,9 @@ public:
         sampleRateChanged(getSampleRate());
     }
 
+   /**
+      Destructor.
+    */
     ~ReNooicePlugin()
     {
         rnnoise_destroy(denoise);
@@ -133,7 +147,7 @@ protected:
     // Information
 
    /**
-      Get the plugin label.@n
+      Get the plugin label.
       This label is a short restricted name consisting of only _, a-z, A-Z and 0-9 characters.
     */
     const char* getLabel() const noexcept override
@@ -150,7 +164,7 @@ protected:
     }
 
    /**
-      Get the plugin license (a single line of text or a URL).@n
+      Get the plugin license (a single line of text or a URL).
       For commercial plugins this should return some short copyright information.
     */
     const char* getLicense() const noexcept override
@@ -160,7 +174,6 @@ protected:
 
    /**
       Get the plugin version, in hexadecimal.
-      @see d_version()
     */
     uint32_t getVersion() const noexcept override
     {
@@ -170,6 +183,10 @@ protected:
     // ----------------------------------------------------------------------------------------------------------------
     // Init
 
+   /**
+      Initialize the audio port @a index.
+      This function will be called once, shortly after the plugin is created.
+    */
     void initAudioPort(bool input, uint32_t index, AudioPort& port) override
     {
         port.groupId = kPortGroupMono;
@@ -177,6 +194,10 @@ protected:
         Plugin::initAudioPort(input, index, port);
     }
 
+   /**
+      Initialize the parameter @a index.
+      This function will be called once, shortly after the plugin is created.
+    */
     void initParameter(uint32_t index, Parameter& parameter) override
     {
         parameter.hints = kParameterIsAutomatable;
@@ -251,11 +272,21 @@ protected:
         }
     }
 
+   /**
+      Get the current value of a parameter.
+      The host may call this function from any context, including realtime processing.
+    */
     float getParameterValue(uint32_t index) const override
     {
         return parameters[index];
     }
 
+   /**
+      Change a parameter value.
+      The host may call this function from any context, including realtime processing.
+      When a parameter is marked as automatable, you must ensure no non-realtime operations are performed.
+      @note This function will only be called for parameter inputs.
+    */
     void setParameterValue(uint32_t index, float value) override
     {
         parameters[index] = value;
@@ -266,7 +297,7 @@ protected:
             dryValue.setTargetValue(value);
             break;
         case kParamGracePeriod:
-            // 48 is 1ms (48000 kHz [1s] / 1000)
+            // 48 frames = 1ms (48000 kHz [1s] / 1000)
             gracePeriodInFrames = d_roundToUnsignedInt(value * 48.f);
             break;
         }
@@ -275,6 +306,9 @@ protected:
     // ----------------------------------------------------------------------------------------------------------------
     // Audio/MIDI Processing
 
+   /**
+      Activate this plugin.
+    */
     void activate() override
     {
         const uint32_t ringBufferSize = denoiseFrameSizeF * 2;
@@ -283,6 +317,8 @@ protected:
 
         bufferIn = new float[denoiseFrameSize];
         bufferOut = new float[denoiseFrameSize];
+        bufferInPos = 0;
+        processing = false;
 
         parameters[kParamCurrentVAD] = 0.f;
         parameters[kParamAverageVAD] = 0.f;
@@ -294,11 +330,12 @@ protected:
         muteValue.setTargetValue(0.f);
         muteValue.clearToTargetValue();
 
-        processing = false;
-        bufferInPos = 0;
         stats.reset();
     }
 
+   /**
+      Deactivate this plugin.
+    */
     void deactivate() override
     {
         delete[] bufferIn;
@@ -446,6 +483,10 @@ protected:
         }
     }
 
+   /**
+      Optional callback to inform the plugin about a sample rate change.
+      This function will only be called when the plugin is deactivated.
+    */
     void sampleRateChanged(const double sampleRate) override
     {
         dryValue.setSampleRate(sampleRate);
@@ -460,6 +501,12 @@ protected:
 
 // --------------------------------------------------------------------------------------------------------------------
 
+/**
+   Create an instance of the Plugin class.
+   This is the entry point for DPF plugins.
+   DPF will call this to either create an instance of your plugin for the host
+   or to fetch some initial information for internal caching.
+ */
 Plugin* createPlugin()
 {
     return new ReNooicePlugin();
