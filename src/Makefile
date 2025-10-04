@@ -31,6 +31,14 @@ FILES_DSP = \
 	$(RNNOISE_PATH)/src/rnnoise_data.c \
 	$(RNNOISE_PATH)/src/rnnoise_tables.c
 
+ifeq ($(RTCD),1)
+FILES_DSP += \
+	$(RNNOISE_PATH)/src/x86/nnet_avx2.c \
+	$(RNNOISE_PATH)/src/x86/nnet_sse4_1.c \
+	$(RNNOISE_PATH)/src/x86/x86cpu.c \
+	$(RNNOISE_PATH)/src/x86/x86_dnn_map.c
+endif
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Do some magic
 
@@ -43,9 +51,11 @@ BASE_FLAGS += -I$(RNNOISE_PATH)/include
 BASE_FLAGS += -I$(RNNOISE_PATH)/src
 BASE_FLAGS += -fno-fast-math
 
+ifeq ($(RTCD),1)
+BASE_FLAGS += -DCPU_INFO_BY_ASM -DRNN_ENABLE_X86_RTCD -mavx -mfma -mavx2 -msse4.1
+endif
+
 # -Wno-sign-compare -Wno-parentheses -Wno-long-long
-# RNN_ENABLE_X86_RTCD
-# CPU_INFO_BY_ASM
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Enable all possible plugin types

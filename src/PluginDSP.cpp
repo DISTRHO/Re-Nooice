@@ -7,8 +7,6 @@
 #include "DistrhoPlugin.hpp"
 #include "extra/RingBuffer.hpp"
 
-#include <cassert>
-
 #include "rnnoise.h"
 
 START_NAMESPACE_DISTRHO
@@ -116,13 +114,13 @@ protected:
         case kParamCurVAD:
             parameter.hints     |= kParameterIsOutput;
             parameter.name       = "Current VAD";
-            parameter.symbol     = "vad";
+            parameter.symbol     = "cur_vad";
             parameter.ranges.def = 0.f;
             break;
         case kParamMaxVAD:
             parameter.hints     |= kParameterIsOutput;
             parameter.name       = "Maximum VAD";
-            parameter.symbol     = "max-vad";
+            parameter.symbol     = "max_vad";
             parameter.ranges.def = 0.f;
             break;
         }
@@ -171,11 +169,8 @@ protected:
             // copy input data into buffer
             std::memcpy(bufferIn + bufferInPos, input + offset, framesCycle * sizeof(float));
 
-            bufferInPos += framesCycle;
-            assert(bufferInPos <= denoiseFrameSize);
-
             // run denoise once input buffer is full
-            if (bufferInPos == denoiseFrameSize)
+            if ((bufferInPos += framesCycle) == denoiseFrameSize)
             {
                 bufferInPos = 0;
 
