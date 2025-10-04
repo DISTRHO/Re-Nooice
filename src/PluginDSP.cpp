@@ -7,6 +7,8 @@
 #include "DistrhoPlugin.hpp"
 #include "extra/RingBuffer.hpp"
 
+#include <cassert>
+
 #include "rnnoise.h"
 
 START_NAMESPACE_DISTRHO
@@ -22,9 +24,9 @@ class ReNooicePlugin : public Plugin
     float* const bufferIn = new float[denoiseFrameSize];
     float* const bufferOut = new float[denoiseFrameSize];
 
-    HeapRingBuffer ringBufferIn;
     HeapRingBuffer ringBufferOut;
 
+    uint32_t bufferInPos = 0;
     bool processing = false;
 
     enum Parameters {
@@ -141,33 +143,16 @@ protected:
 
     void activate() override
     {
-        const uint32_t ringBufferSize = denoiseFrameSize * 3 * sizeof(float);
-        ringBufferIn.createBuffer(ringBufferSize);
+        const uint32_t ringBufferSize = denoiseFrameSize * 2 * sizeof(float);
         ringBufferOut.createBuffer(ringBufferSize);
-        processing = false;
         parameters[kParamCurVAD] = parameters[kParamMaxVAD] = 0.f;
+        processing = false;
+        bufferInPos = 0;
     }
 
     void deactivate() override
     {
-        ringBufferIn.deleteBuffer();
         ringBufferOut.deleteBuffer();
-    }
-
-    void runDenoise()
-    {
-        // extract input data from ringbuffer
-        ringBufferIn.readCustomData(bufferIn, denoiseFrameSize * sizeof(float));
-
-        // run denoise
-        parameters[kParamCurVAD] = rnnoise_process_frame(denoise, bufferOut, bufferIn);
-
-        if (parameters[kParamCurVAD] > parameters[kParamMaxVAD])
-            parameters[kParamMaxVAD] = parameters[kParamCurVAD];
-
-        // write denoise output into ringbuffer
-        ringBufferOut.writeCustomData(bufferOut, denoiseFrameSize * sizeof(float));
-        ringBufferOut.commitWrite();
     }
 
    /**
@@ -181,14 +166,28 @@ protected:
 
         for (uint32_t offset = 0; offset != frames;)
         {
-            const uint32_t framesCycle = std::min(denoiseFrameSize, frames - offset);
+            const uint32_t framesCycle = std::min(denoiseFrameSize - bufferInPos, frames - offset);
 
-            // write input data into ringbuffer
-            ringBufferIn.writeCustomData(input + offset, framesCycle * sizeof(float));
-            ringBufferIn.commitWrite();
+            // copy input data into buffer
+            std::memcpy(bufferIn + bufferInPos, input + offset, framesCycle * sizeof(float));
 
-            if (ringBufferIn.getReadableDataSize() / sizeof(float) >= denoiseFrameSize)
-                runDenoise();
+            bufferInPos += framesCycle;
+            assert(bufferInPos <= denoiseFrameSize);
+
+            // run denoise once input buffer is full
+            if (bufferInPos == denoiseFrameSize)
+            {
+                bufferInPos = 0;
+
+                parameters[kParamCurVAD] = rnnoise_process_frame(denoise, bufferOut, bufferIn);
+
+                if (parameters[kParamCurVAD] > parameters[kParamMaxVAD])
+                    parameters[kParamMaxVAD] = parameters[kParamCurVAD];
+
+                // write denoise output into ringbuffer
+                ringBufferOut.writeCustomData(bufferOut, denoiseFrameSize * sizeof(float));
+                ringBufferOut.commitWrite();
+            }
 
             if (processing)
             {
@@ -196,7 +195,7 @@ protected:
             }
             else
             {
-                std::memset(output + offset, 0, sizeof(float) * framesCycle);
+                std::memset(output + offset, 0, framesCycle * sizeof(float));
 
                 if (ringBufferOut.getReadableDataSize() / sizeof(float) >= denoiseFrameSize)
                     processing = true;
