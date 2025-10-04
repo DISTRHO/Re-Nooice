@@ -3,6 +3,11 @@
 # SPDX-License-Identifier: ISC
 
 # ---------------------------------------------------------------------------------------------------------------------
+# Include base makefile for a few definitions
+
+include ../deps/dpf/Makefile.base.mk
+
+# ---------------------------------------------------------------------------------------------------------------------
 # Project name, used for binaries
 
 NAME = ReNooice
@@ -31,7 +36,7 @@ FILES_DSP = \
 	$(RNNOISE_PATH)/src/rnnoise_data.c \
 	$(RNNOISE_PATH)/src/rnnoise_tables.c
 
-ifeq ($(RTCD),1)
+ifeq ($(CPU_I386_OR_X86_64),true)
 FILES_DSP += \
 	$(RNNOISE_PATH)/src/x86/nnet_avx2.c \
 	$(RNNOISE_PATH)/src/x86/nnet_sse4_1.c \
@@ -44,22 +49,26 @@ endif
 
 include ../deps/dpf/Makefile.plugins.mk
 
-# BASE_FLAGS += -DDISABLE_DEBUG_FLOAT
-# BASE_FLAGS += -DFLOAT_APPROX
+BASE_FLAGS += -DDISABLE_DEBUG_FLOAT
+BASE_FLAGS += -DFLOAT_APPROX
 BASE_FLAGS += -DRNNOISE_EXPORT=
 BASE_FLAGS += -I$(RNNOISE_PATH)/include
 BASE_FLAGS += -I$(RNNOISE_PATH)/src
-BASE_FLAGS += -fno-fast-math
-
-ifeq ($(RTCD),1)
-BASE_FLAGS += -DCPU_INFO_BY_ASM -DRNN_ENABLE_X86_RTCD -mavx -mfma -mavx2 -msse4.1
-endif
-
+# BASE_FLAGS += -fno-fast-math
 # -Wno-sign-compare -Wno-parentheses -Wno-long-long
+
+ifeq ($(CPU_I386_OR_X86_64),true)
+BASE_FLAGS += -DCPU_INFO_BY_ASM -DRNN_ENABLE_X86_RTCD
+
+$(BUILD_DIR)/$(RNNOISE_PATH)/src/x86/nnet_avx2.c.o: BASE_FLAGS += -mavx -mfma -mavx2
+
+$(BUILD_DIR)/$(RNNOISE_PATH)/src/x86/nnet_sse4_1.c.o: BASE_FLAGS += -msse4.1
+
+endif
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Enable all possible plugin types
 
-all: au clap dssi lv2_sep vst2 vst3
+all: clap dssi lv2_sep vst2 vst3
 
 # ---------------------------------------------------------------------------------------------------------------------

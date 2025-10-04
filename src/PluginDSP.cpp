@@ -177,7 +177,7 @@ protected:
         case kParamAverageVAD:
             parameter.hints |= kParameterIsOutput;
             parameter.name   = "Average VAD";
-            parameter.symbol = "max_vad";
+            parameter.symbol = "avg_vad";
             break;
         case kParamMinimumVAD:
             parameter.hints |= kParameterIsOutput;
