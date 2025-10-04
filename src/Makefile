@@ -72,10 +72,6 @@ $(BUILD_DIR)/$(RNNOISE_PATH)/src/x86/nnet_avx2.c.o: BASE_FLAGS += -mavx -mfma -m
 
 $(BUILD_DIR)/$(RNNOISE_PATH)/src/x86/nnet_sse4_1.c.o: BASE_FLAGS += -msse4.1
 
-else ifeq ($(WASM),true)
-
-BASE_FLAGS += -U__AVX__ -U__SSE2__
-
 endif
 
 # ---------------------------------------------------------------------------------------------------------------------
