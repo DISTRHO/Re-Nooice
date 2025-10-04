@@ -130,7 +130,7 @@ protected:
 
         for (uint32_t offset = 0; offset != frames;)
         {
-            const uint32_t framesCycle = std::min(denoiseFrameSize, frames);
+            const uint32_t framesCycle = std::min(denoiseFrameSize, frames - offset);
 
             // write input data into ringbuffer
             ringBufferIn.writeCustomData(input, sizeof(float) * framesCycle);
