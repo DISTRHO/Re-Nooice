@@ -26,11 +26,10 @@ endif
 # ---------------------------------------------------------------------------------------------------------------------
 # auto-download model files
 
-models:
-# deps/rnnoise/src/rnnoise_data.h
+models: deps/rnnoise/src/rnnoise_data.h
 
-# deps/rnnoise/src/rnnoise_data.h:
-# 	cd deps/rnnoise && sh download_model.sh
+deps/rnnoise/src/rnnoise_data.h:
+	cd deps/rnnoise && sh download_model.sh
 
 # ---------------------------------------------------------------------------------------------------------------------
 

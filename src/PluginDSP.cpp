@@ -15,6 +15,8 @@ START_NAMESPACE_DISTRHO
 
 class ReNooicePlugin : public Plugin
 {
+    static constexpr const uint32_t kDenoiseScaling = std::numeric_limits<short>::max();
+
     const uint32_t denoiseFrameSize = static_cast<uint32_t>(rnnoise_get_frame_size());
 
     DenoiseState* const denoise = rnnoise_create(nullptr);
@@ -174,6 +176,9 @@ protected:
             {
                 bufferInPos = 0;
 
+                for (uint32_t i = 0; i < denoiseFrameSize; ++i)
+                    bufferIn[i] *= kDenoiseScaling;
+
                 parameters[kParamCurVAD] = rnnoise_process_frame(denoise, bufferOut, bufferIn);
 
                 if (parameters[kParamCurVAD] > parameters[kParamMaxVAD])
@@ -187,6 +192,9 @@ protected:
             if (processing)
             {
                 ringBufferOut.readCustomData(output + offset, framesCycle * sizeof(float));
+
+                for (uint32_t i = 0; i < framesCycle; ++i)
+                    output[i + offset] /= kDenoiseScaling;
             }
             else
             {
