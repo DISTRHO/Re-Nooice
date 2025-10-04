@@ -36,14 +36,14 @@ FILES_DSP = \
 
 include ../deps/dpf/Makefile.plugins.mk
 
-BASE_FLAGS += -DDISABLE_DEBUG_FLOAT
-BASE_FLAGS += -DFLOAT_APPROX
+# BASE_FLAGS += -DDISABLE_DEBUG_FLOAT
+# BASE_FLAGS += -DFLOAT_APPROX
 BASE_FLAGS += -DRNNOISE_EXPORT=
 BASE_FLAGS += -I$(RNNOISE_PATH)/include
 BASE_FLAGS += -I$(RNNOISE_PATH)/src
+BASE_FLAGS += -fno-fast-math
 
 # -Wno-sign-compare -Wno-parentheses -Wno-long-long
-# OP_ENABLE_ASSERTIONS
 # RNN_ENABLE_X86_RTCD
 # CPU_INFO_BY_ASM
 

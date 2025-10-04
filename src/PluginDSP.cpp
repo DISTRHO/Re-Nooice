@@ -27,13 +27,20 @@ class ReNooicePlugin : public Plugin
 
     bool processing = false;
 
+    enum Parameters {
+        kParamCurVAD,
+        kParamMaxVAD,
+        kParamCount,
+    };
+    float parameters[kParamCount] = {};
+
 public:
    /**
       Plugin class constructor.
       You must set all parameter values to their defaults, matching ParameterRanges::def.
     */
     ReNooicePlugin()
-        : Plugin(0, 0, 0) // parameters, programs, states
+        : Plugin(kParamCount, 0, 0) // parameters, programs, states
     {
         // initial sample rate setup
         sampleRateChanged(getSampleRate());
@@ -89,6 +96,46 @@ protected:
     // ----------------------------------------------------------------------------------------------------------------
     // Init
 
+    void initAudioPort(bool input, uint32_t index, AudioPort& port)
+    {
+        port.groupId = kPortGroupMono;
+
+        Plugin::initAudioPort(input, index, port);
+    }
+
+    void initParameter(uint32_t index, Parameter& parameter)
+    {
+        parameter.hints      = kParameterIsAutomatable;
+        parameter.ranges.min = 0.0f;
+        parameter.ranges.max = 1.0f;
+
+        switch (index)
+        {
+        case kParamCurVAD:
+            parameter.hints     |= kParameterIsOutput;
+            parameter.name       = "Current VAD";
+            parameter.symbol     = "vad";
+            parameter.ranges.def = 0.f;
+            break;
+        case kParamMaxVAD:
+            parameter.hints     |= kParameterIsOutput;
+            parameter.name       = "Maximum VAD";
+            parameter.symbol     = "max-vad";
+            parameter.ranges.def = 0.f;
+            break;
+        }
+    }
+
+    float getParameterValue(uint32_t index) const
+    {
+        return parameters[index];
+    }
+
+    void setParameterValue(uint32_t index, float value)
+    {
+        parameters[index] = value;
+    }
+
     // ----------------------------------------------------------------------------------------------------------------
     // Audio/MIDI Processing
 
@@ -98,6 +145,7 @@ protected:
         ringBufferIn.createBuffer(ringBufferSize);
         ringBufferOut.createBuffer(ringBufferSize);
         processing = false;
+        parameters[kParamCurVAD] = parameters[kParamMaxVAD] = 0.f;
     }
 
     void deactivate() override
@@ -112,7 +160,10 @@ protected:
         ringBufferIn.readCustomData(bufferIn, denoiseFrameSize * sizeof(float));
 
         // run denoise
-        rnnoise_process_frame(denoise, bufferOut, bufferIn);
+        parameters[kParamCurVAD] = rnnoise_process_frame(denoise, bufferOut, bufferIn);
+
+        if (parameters[kParamCurVAD] > parameters[kParamMaxVAD])
+            parameters[kParamMaxVAD] = parameters[kParamCurVAD];
 
         // write denoise output into ringbuffer
         ringBufferOut.writeCustomData(bufferOut, denoiseFrameSize * sizeof(float));
@@ -133,7 +184,7 @@ protected:
             const uint32_t framesCycle = std::min(denoiseFrameSize, frames - offset);
 
             // write input data into ringbuffer
-            ringBufferIn.writeCustomData(input, sizeof(float) * framesCycle);
+            ringBufferIn.writeCustomData(input + offset, framesCycle * sizeof(float));
             ringBufferIn.commitWrite();
 
             if (ringBufferIn.getReadableDataSize() / sizeof(float) >= denoiseFrameSize)
@@ -147,7 +198,7 @@ protected:
             {
                 std::memset(output + offset, 0, sizeof(float) * framesCycle);
 
-                if (ringBufferOut.getReadableDataSize() / sizeof(float) >= denoiseFrameSize * 2)
+                if (ringBufferOut.getReadableDataSize() / sizeof(float) >= denoiseFrameSize)
                     processing = true;
             }
 
@@ -157,7 +208,7 @@ protected:
 
     void sampleRateChanged(double sampleRate) override
     {
-        setLatency(d_roundToUnsignedInt(sampleRate / 48000.0 * denoiseFrameSize * 2));
+        setLatency(d_roundToUnsignedInt(sampleRate / 48000.0 * denoiseFrameSize));
     }
 
     // ----------------------------------------------------------------------------------------------------------------
