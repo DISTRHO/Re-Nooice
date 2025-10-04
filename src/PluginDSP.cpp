@@ -30,11 +30,61 @@ class ReNooicePlugin : public Plugin
     bool processing = false;
 
     enum Parameters {
-        kParamCurVAD,
-        kParamMaxVAD,
+        kParamEnableStats,
+        kParamCurrentVAD,
+        kParamAverageVAD,
+        kParamMinimumVAD,
+        kParamMaximumVAD,
         kParamCount,
     };
     float parameters[kParamCount] = {};
+
+    struct {
+        float vads[40];
+        float avg, min, max;
+        int pos;
+        bool enabled = false;
+        bool running;
+
+        void store(const float vad)
+        {
+            vads[pos++] = vad;
+
+            if (pos == ARRAY_SIZE(vads))
+            {
+                pos = 0;
+                running = true;
+            }
+
+            if (running)
+            {
+                avg = 0.f;
+                min = 1.f;
+                max = 0.f;
+
+                for (uint32_t i = 0; i < ARRAY_SIZE(vads); ++i)
+                {
+                    if (vads[i] < min)
+                        min = vads[i];
+                    if (vads[i] > max)
+                        max = vads[i];
+
+                    avg += vads[i];
+                }
+
+                avg /= ARRAY_SIZE(vads);
+            }
+        }
+
+        void reset()
+        {
+            avg = 0.f;
+            min = 1.f;
+            max = 0.f;
+            pos = 0;
+            running = false;
+        }
+    } stats;
 
 public:
    /**
@@ -108,22 +158,37 @@ protected:
     void initParameter(uint32_t index, Parameter& parameter)
     {
         parameter.hints      = kParameterIsAutomatable;
+        parameter.ranges.def = 0.f;
         parameter.ranges.min = 0.0f;
         parameter.ranges.max = 1.0f;
 
         switch (index)
         {
-        case kParamCurVAD:
-            parameter.hints     |= kParameterIsOutput;
-            parameter.name       = "Current VAD";
-            parameter.symbol     = "cur_vad";
-            parameter.ranges.def = 0.f;
+        case kParamEnableStats:
+            parameter.hints |= kParameterIsBoolean | kParameterIsInteger;
+            parameter.name   = "Enable Stats";
+            parameter.symbol = "stats";
             break;
-        case kParamMaxVAD:
-            parameter.hints     |= kParameterIsOutput;
-            parameter.name       = "Maximum VAD";
-            parameter.symbol     = "max_vad";
-            parameter.ranges.def = 0.f;
+        case kParamCurrentVAD:
+            parameter.hints |= kParameterIsOutput;
+            parameter.name   = "Current VAD";
+            parameter.symbol = "cur_vad";
+            break;
+        case kParamAverageVAD:
+            parameter.hints |= kParameterIsOutput;
+            parameter.name   = "Average VAD";
+            parameter.symbol = "max_vad";
+            break;
+        case kParamMinimumVAD:
+            parameter.hints |= kParameterIsOutput;
+            parameter.name   = "Minimum VAD";
+            parameter.symbol = "min_vad";
+            parameter.ranges.def = 1.f;
+            break;
+        case kParamMaximumVAD:
+            parameter.hints |= kParameterIsOutput;
+            parameter.name   = "Maximum VAD";
+            parameter.symbol = "max_vad";
             break;
         }
     }
@@ -145,9 +210,13 @@ protected:
     {
         const uint32_t ringBufferSize = denoiseFrameSize * 2 * sizeof(float);
         ringBufferOut.createBuffer(ringBufferSize);
-        parameters[kParamCurVAD] = parameters[kParamMaxVAD] = 0.f;
+        parameters[kParamCurrentVAD] = 0.f;
+        parameters[kParamAverageVAD] = 0.f;
+        parameters[kParamMinimumVAD] = 1.f;
+        parameters[kParamMaximumVAD] = 0.f;
         processing = false;
         bufferInPos = 0;
+        stats.reset();
     }
 
     void deactivate() override
@@ -164,6 +233,13 @@ protected:
         const float* input = inputs[0];
         /* */ float* output = outputs[0];
 
+        const bool statsEnabled = parameters[kParamEnableStats] > 0.5f;
+        if (stats.enabled != statsEnabled)
+        {
+            stats.reset();
+            stats.enabled = statsEnabled;
+        }
+
         for (uint32_t offset = 0; offset != frames;)
         {
             const uint32_t framesCycle = std::min(denoiseFrameSize - bufferInPos, frames - offset);
@@ -179,10 +255,15 @@ protected:
                 for (uint32_t i = 0; i < denoiseFrameSize; ++i)
                     bufferIn[i] *= kDenoiseScaling;
 
-                parameters[kParamCurVAD] = rnnoise_process_frame(denoise, bufferOut, bufferIn);
+                parameters[kParamCurrentVAD] = rnnoise_process_frame(denoise, bufferOut, bufferIn);
 
-                if (parameters[kParamCurVAD] > parameters[kParamMaxVAD])
-                    parameters[kParamMaxVAD] = parameters[kParamCurVAD];
+                if (stats.enabled)
+                {
+                    stats.store(parameters[kParamCurrentVAD]);
+                    parameters[kParamAverageVAD] = stats.avg;
+                    parameters[kParamMinimumVAD] = stats.min;
+                    parameters[kParamMaximumVAD] = stats.max;
+                }
 
                 // write denoise output into ringbuffer
                 ringBufferOut.writeCustomData(bufferOut, denoiseFrameSize * sizeof(float));
