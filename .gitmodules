@@ -1,0 +1,6 @@
+[submodule "deps/rnnoise"]
+	path = deps/rnnoise
+	url = https://github.com/xiph/rnnoise.git
+[submodule "deps/dpf"]
+	path = deps/dpf
+	url = https://github.com/DISTRHO/DPF.git
