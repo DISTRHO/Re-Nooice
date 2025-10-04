@@ -24,6 +24,12 @@ gen:
 endif
 
 # ---------------------------------------------------------------------------------------------------------------------
+# mapi target, to generate shared libraries
+
+mapi: models
+	$(MAKE) -C src mapi
+
+# ---------------------------------------------------------------------------------------------------------------------
 # auto-download model files
 
 models: deps/rnnoise/src/rnnoise_data.h
@@ -38,6 +44,8 @@ clean:
 	$(MAKE) clean -C src
 	rm -f deps/rnnoise/src/*.d
 	rm -f deps/rnnoise/src/*.o
+	rm -f deps/rnnoise/src/x86/*.d
+	rm -f deps/rnnoise/src/x86/*.o
 	rm -rf bin build
 
 distclean: clean

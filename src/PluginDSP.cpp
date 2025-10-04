@@ -148,14 +148,14 @@ protected:
     // ----------------------------------------------------------------------------------------------------------------
     // Init
 
-    void initAudioPort(bool input, uint32_t index, AudioPort& port)
+    void initAudioPort(bool input, uint32_t index, AudioPort& port) override
     {
         port.groupId = kPortGroupMono;
 
         Plugin::initAudioPort(input, index, port);
     }
 
-    void initParameter(uint32_t index, Parameter& parameter)
+    void initParameter(uint32_t index, Parameter& parameter) override
     {
         parameter.hints      = kParameterIsAutomatable;
         parameter.ranges.def = 0.f;
@@ -193,14 +193,19 @@ protected:
         }
     }
 
-    float getParameterValue(uint32_t index) const
+    float getParameterValue(uint32_t index) const override
     {
         return parameters[index];
     }
 
-    void setParameterValue(uint32_t index, float value)
+    void setParameterValue(uint32_t index, float value) override
     {
-        parameters[index] = value;
+        switch (index)
+        {
+        case kParamEnableStats:
+            parameters[index] = value;
+            break;
+        }
     }
 
     // ----------------------------------------------------------------------------------------------------------------

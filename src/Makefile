@@ -7,6 +7,12 @@
 
 include ../deps/dpf/Makefile.base.mk
 
+ifeq ($(CPU_I386_OR_X86_64),true)
+ifneq ($(WASM),true)
+X86_RTCD = true
+endif
+endif
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Project name, used for binaries
 
@@ -36,7 +42,7 @@ FILES_DSP = \
 	$(RNNOISE_PATH)/src/rnnoise_data.c \
 	$(RNNOISE_PATH)/src/rnnoise_tables.c
 
-ifeq ($(CPU_I386_OR_X86_64),true)
+ifeq ($(X86_RTCD),true)
 FILES_DSP += \
 	$(RNNOISE_PATH)/src/x86/nnet_avx2.c \
 	$(RNNOISE_PATH)/src/x86/nnet_sse4_1.c \
@@ -46,6 +52,8 @@ endif
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Do some magic
+
+MAPI_MODULE_NAME = mapi_renooice
 
 include ../deps/dpf/Makefile.plugins.mk
 
@@ -57,12 +65,16 @@ BASE_FLAGS += -I$(RNNOISE_PATH)/src
 # BASE_FLAGS += -fno-fast-math
 # -Wno-sign-compare -Wno-parentheses -Wno-long-long
 
-ifeq ($(CPU_I386_OR_X86_64),true)
+ifeq ($(X86_RTCD),true)
 BASE_FLAGS += -DCPU_INFO_BY_ASM -DRNN_ENABLE_X86_RTCD
 
 $(BUILD_DIR)/$(RNNOISE_PATH)/src/x86/nnet_avx2.c.o: BASE_FLAGS += -mavx -mfma -mavx2
 
 $(BUILD_DIR)/$(RNNOISE_PATH)/src/x86/nnet_sse4_1.c.o: BASE_FLAGS += -msse4.1
+
+else ifeq ($(WASM),true)
+
+BASE_FLAGS += -U__AVX__ -U__SSE2__
 
 endif
 
