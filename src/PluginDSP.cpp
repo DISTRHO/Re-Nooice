@@ -436,13 +436,13 @@ protected:
                 // mute output while still capturing audio frames
                 std::memset(output, 0, framesCycleF);
 
-                if (ringBufferOut.getReadableDataSize() / sizeof(float) >= denoiseFrameSize)
+                if (ringBufferOut.getReadableDataSize() >= denoiseFrameSizeF)
                     processing = true;
             }
 
             offset += framesCycle;
-            input += offset;
-            output += offset;
+            input += framesCycle;
+            output += framesCycle;
         }
     }
 
