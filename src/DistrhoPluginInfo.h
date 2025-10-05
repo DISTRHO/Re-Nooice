@@ -5,7 +5,23 @@
  */
 
 /**
-   The plugin name.@n
+   Parameters used by the plugin.
+   Stored in a common header file for convenience
+ */
+enum Parameters {
+    kParamBypass,
+    kParamThreshold,
+    kParamGracePeriod,
+    kParamEnableStats,
+    kParamCurrentVAD,
+    kParamAverageVAD,
+    kParamMinimumVAD,
+    kParamMaximumVAD,
+    kParamCount,
+};
+
+/**
+   The plugin name.
    This is used to identify your plugin before a Plugin instance can be created.
    @note This macro is required.
  */
@@ -34,16 +50,16 @@
    @see DISTRHO_UI_USE_NANOVG
    @see UI
  */
-#define DISTRHO_PLUGIN_HAS_UI 0
+#define DISTRHO_PLUGIN_HAS_UI 1
 
 /**
-   Whether the plugin processing is realtime-safe.@n
+   Whether the plugin processing is realtime-safe.
    TODO - list rtsafe requirements
  */
 #define DISTRHO_PLUGIN_IS_RT_SAFE 1
 
 /**
-   Whether the plugin is a synth.@n
+   Whether the plugin is a synth.
    @ref DISTRHO_PLUGIN_WANT_MIDI_INPUT is automatically enabled when this is too.
    @see DISTRHO_PLUGIN_WANT_MIDI_INPUT
  */
@@ -64,7 +80,7 @@
 #define DISTRHO_PLUGIN_WANT_LATENCY 1
 
 /**
-   Whether the plugin wants MIDI input.@n
+   Whether the plugin wants MIDI input.
    This is automatically enabled if @ref DISTRHO_PLUGIN_IS_SYNTH is true.
  */
 #define DISTRHO_PLUGIN_WANT_MIDI_INPUT 0
@@ -76,7 +92,7 @@
 #define DISTRHO_PLUGIN_WANT_MIDI_OUTPUT 0
 
 /**
-   Whether the plugin wants to change its own parameter inputs.@n
+   Whether the plugin wants to change its own parameter inputs.
    Not all hosts or plugin formats support this,
    so Plugin::canRequestParameterValueChanges() can be used to query support at runtime.
    @see Plugin::requestParameterValueChange(uint32_t, float)
@@ -114,17 +130,17 @@
 #define DISTRHO_PLUGIN_WANT_TIMEPOS 0
 
 /**
-   Whether the %UI uses a custom toolkit implementation based on OpenGL.@n
+   Whether the %UI uses a custom toolkit implementation based on OpenGL.
    When enabled, the macros @ref DISTRHO_UI_CUSTOM_INCLUDE_PATH and @ref DISTRHO_UI_CUSTOM_WIDGET_TYPE are required.
  */
-#define DISTRHO_UI_USE_CUSTOM 1
+#define DISTRHO_UI_USE_CUSTOM 0
 
 /**
    The include path to the header file used by the custom toolkit implementation.
    This path must be relative to dpf/distrho/DistrhoUI.hpp
    @see DISTRHO_UI_USE_CUSTOM
  */
-#define DISTRHO_UI_CUSTOM_INCLUDE_PATH "DearImGuiColorTextEditor.hpp"
+#define DISTRHO_UI_CUSTOM_INCLUDE_PATH "Quantum.hpp"
 
 /**
    The top-level-widget typedef to use for the custom toolkit.
@@ -133,10 +149,10 @@
    and define widget type as e.g. DGL_NAMESPACE::MyCustomTopLevelWidget.
    @see DISTRHO_UI_USE_CUSTOM
  */
-#define DISTRHO_UI_CUSTOM_WIDGET_TYPE DGL_NAMESPACE::ImGuiTextEditorTopLevelWidget
+#define DISTRHO_UI_CUSTOM_WIDGET_TYPE DGL_NAMESPACE::DarkBreeze
 
 /**
-   Default UI width to use when creating initial and temporary windows.@n
+   Default UI width to use when creating initial and temporary windows.
    Setting this macro allows to skip a temporary UI from being created in certain VST2 and VST3 hosts.
    (which would normally be done for knowing the UI size before host creates a window for it)
 
@@ -147,7 +163,7 @@
 #define DISTRHO_UI_DEFAULT_WIDTH 600
 
 /**
-   Default UI height to use when creating initial and temporary windows.@n
+   Default UI height to use when creating initial and temporary windows.
    Setting this macro allows to skip a temporary UI from being created in certain VST2 and VST3 hosts.
    (which would normally be done for knowing the UI size before host creates a window for it)
 
@@ -158,27 +174,27 @@
 #define DISTRHO_UI_DEFAULT_HEIGHT 400
 
 /**
-   Whether the %UI uses NanoVG for drawing instead of the default raw OpenGL calls.@n
+   Whether the %UI uses NanoVG for drawing instead of the default raw OpenGL calls.
    When enabled your %UI instance will subclass @ref NanoWidget instead of @ref Widget.
  */
-#define DISTRHO_UI_USE_NANOVG 0
+#define DISTRHO_UI_USE_NANOVG 1
 
 /**
-   Whether the %UI is resizable to any size by the user.@n
-   By default this is false, and resizing is only allowed under the plugin UI control,@n
+   Whether the %UI is resizable to any size by the user.
+   By default this is false, and resizing is only allowed under the plugin UI control,
    Enabling this options makes it possible for the user to resize the plugin UI at anytime.
    @see UI::setGeometryConstraints(uint, uint, bool, bool)
  */
 #define DISTRHO_UI_USER_RESIZABLE 1
 
 /**
-   Whether to %UI is going to use file browser dialogs.@n
+   Whether to %UI is going to use file browser dialogs.
    By default this is false, with the file browser APIs not available for use.
  */
 #define DISTRHO_UI_FILE_BROWSER 1
 
 /**
-   A 4-character symbol that identifies a brand or manufacturer, with at least one non-lower case character.@n
+   A 4-character symbol that identifies a brand or manufacturer, with at least one non-lower case character.
    Plugins from the same brand should use the same symbol.
    @note This macro is required when building AU plugins, and used for VST3 if present
    @note Setting this macro will change the uid of a VST3 plugin.
@@ -187,14 +203,14 @@
 #define DISTRHO_PLUGIN_BRAND_ID Dstr
 
 /**
-   A 4-character symbol which identifies a plugin.@n
+   A 4-character symbol which identifies a plugin.
    It must be unique within at least a set of plugins from the brand.
    @note This macro is required when building AU plugins
  */
 #define DISTRHO_PLUGIN_UNIQUE_ID rNoi
 
 /**
-   Custom LV2 category for the plugin.@n
+   Custom LV2 category for the plugin.
    This is a single string, and can be one of the following values:
 
       - lv2:AllpassPlugin
@@ -241,7 +257,7 @@
 #define DISTRHO_PLUGIN_LV2_CATEGORY "lv2:UtilityPlugin"
 
 /**
-   Custom VST3 categories for the plugin.@n
+   Custom VST3 categories for the plugin.
    This is a single concatenated string of categories, separated by a @c |.
 
    Each effect category can be one of the following values:
@@ -285,7 +301,7 @@
 #define DISTRHO_PLUGIN_VST3_CATEGORIES "Fx|Tools|Mono"
 
 /**
-   Custom CLAP features for the plugin.@n
+   Custom CLAP features for the plugin.
    This is a list of features defined as a string array body, without the terminating @c , or nullptr.
 
    A top-level category can be set as feature and be one of the following values:

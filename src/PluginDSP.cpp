@@ -50,18 +50,7 @@ class ReNooicePlugin : public Plugin
     // smooth mute/unmute
     LinearValueSmoother muteValue;
 
-    // our parameter list
-    enum Parameters {
-        kParamBypass,
-        kParamThreshold,
-        kParamGracePeriod,
-        kParamEnableStats,
-        kParamCurrentVAD,
-        kParamAverageVAD,
-        kParamMinimumVAD,
-        kParamMaximumVAD,
-        kParamCount,
-    };
+    // cached parameter values
     float parameters[kParamCount] = {};
 
     // denoise statistics
@@ -445,26 +434,23 @@ protected:
                         output[i] = output[i] * wet + bufferOut[i] * dry;
                     }
                 }
+                // enabled (bypass off)
+                else if (d_isZero(dryValue.getTargetValue()))
+                {
+                    // copy processed buffer directly into output
+                    ringBufferOut.readCustomData(output, framesCycleF);
+
+                    // retrieve dry buffer (doing nothing with it)
+                    ringBufferDry.readCustomData(bufferOut, framesCycleF);
+                }
+                // disable (bypass on)
                 else
                 {
-                    // enabled (bypass off)
-                    if (d_isZero(dryValue.getTargetValue()))
-                    {
-                        // copy processed buffer directly into output
-                        ringBufferOut.readCustomData(output, framesCycleF);
+                    // copy dry buffer directly into output
+                    ringBufferDry.readCustomData(output, framesCycleF);
 
-                        // retrieve dry buffer (doing nothing with it)
-                        ringBufferDry.readCustomData(bufferOut, framesCycleF);
-                    }
-                    // disable (bypass on)
-                    else
-                    {
-                        // copy dry buffer directly into output
-                        ringBufferDry.readCustomData(output, framesCycleF);
-
-                        // retrieve processed buffer (doing nothing with it)
-                        ringBufferOut.readCustomData(bufferOut, framesCycleF);
-                    }
+                    // retrieve processed buffer (doing nothing with it)
+                    ringBufferOut.readCustomData(bufferOut, framesCycleF);
                 }
             }
             // capture more audio frames until it fits 1 denoise block

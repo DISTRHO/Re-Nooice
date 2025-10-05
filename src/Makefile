@@ -23,7 +23,6 @@ NAME = ReNooice
 
 DPF_BUILD_DIR = ../build
 DPF_TARGET_DIR = ../bin
-
 RNNOISE_PATH = ../deps/rnnoise
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -50,6 +49,10 @@ FILES_DSP += \
 	$(RNNOISE_PATH)/src/x86/x86_dnn_map.c
 endif
 
+FILES_UI = \
+	PluginUI.cpp \
+	../deps/dpf-widgets/opengl/Quantum.cpp
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Do some magic
 
@@ -74,9 +77,11 @@ $(BUILD_DIR)/$(RNNOISE_PATH)/src/x86/nnet_sse4_1.c.o: BASE_FLAGS += -msse4.1
 
 endif
 
+BUILD_CXX_FLAGS += -I../deps/dpf-widgets/opengl
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Enable all possible plugin types
 
-all: clap ladspa lv2_sep vst2 vst3
+all: clap jack ladspa lv2_sep vst2 vst3
 
 # ---------------------------------------------------------------------------------------------------------------------
