@@ -22,3 +22,7 @@ Progress so far:
  - [ ] More comprehensive README and documentation
  - [ ] Make a 1.0 release
  - [ ] Package it in KXStudio repositories
+
+Because people will ask for it, current screenshot:
+
+![Screenshot](Screenshot.png)
