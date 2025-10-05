@@ -113,24 +113,27 @@ class ReNooiceUI : public UI,
 
             statCurrent.label.setLabel("Current");
             statCurrent.meter.setRange(0, 100);
+            statCurrent.meter.setUnitLabel("%");
             statCurrent.meter.setValue(0);
-            statCurrent.meter.setValueFormat("%5.1f %%");
+            statCurrent.meter.setValueCentered(false);
 
             statAverage.label.setLabel("Average");
             statAverage.meter.setRange(0, 100);
+            statAverage.meter.setUnitLabel("%");
             statAverage.meter.setValue(0);
             statAverage.meter.setValueCentered(false);
-            statAverage.meter.setValueFormat("%5.1f %%");
 
             statMinimum.label.setLabel("Minimum");
             statMinimum.meter.setRange(0, 100);
+            statMinimum.meter.setUnitLabel("%");
             statMinimum.meter.setValue(100);
-            statMinimum.meter.setValueFormat("%5.1f %%");
+            statMinimum.meter.setValueCentered(false);
 
             statMaximum.label.setLabel("Maximum");
             statMaximum.meter.setRange(0, 100);
+            statMaximum.meter.setUnitLabel("%");
             statMaximum.meter.setValue(0);
-            statMaximum.meter.setValueFormat("%5.1f %%");
+            statMaximum.meter.setValueCentered(false);
 
             items.push_back(&switchEnable);
             items.push_back(&separator1);
