@@ -20,7 +20,7 @@ class ReNooiceUI : public UI,
     struct Theme : QuantumTheme {
         Theme(NanoTopLevelWidget* const parent)
         {
-            const double scaleFactor = parent->getScaleFactor() * 1.5;
+            const double scaleFactor = parent->getScaleFactor() * 1.25;
 
             borderSize = 2;
             padding = 7;
@@ -33,7 +33,7 @@ class ReNooiceUI : public UI,
             widgetLineSize *= scaleFactor;
             textPixelRatioWidthCompensation = padding + borderSize + 6 * scaleFactor;
 
-            windowPadding = borderSize + padding * 3;
+            windowPadding = borderSize + padding;
         }
     };
 
@@ -43,7 +43,9 @@ class ReNooiceUI : public UI,
         QuantumSingleSwitch switchEnable;
         QuantumSingleSeparatorLine separator1;
         QuantumValueSliderWithLabel sliderThreshold;
+        QuantumSingleLabel sliderThresholdLabel;
         QuantumValueSliderWithLabel sliderGracePeriod;
+        QuantumSingleLabel sliderGracePeriodLabel;
         QuantumSingleSeparatorLine separator2;
         QuantumSingleSwitch switchEnableStats;
         QuantumValueMeterWithLabel statCurrent;
@@ -57,7 +59,9 @@ class ReNooiceUI : public UI,
               switchEnable(&frame, theme),
               separator1(&frame, theme),
               sliderThreshold(&frame, theme),
+              sliderThresholdLabel(&frame, theme),
               sliderGracePeriod(&frame, theme),
+              sliderGracePeriodLabel(&frame, theme),
               separator2(&frame, theme),
               switchEnableStats(&frame, theme),
               statCurrent(&frame, theme),
@@ -65,6 +69,9 @@ class ReNooiceUI : public UI,
               statMinimum(&frame, theme),
               statMaximum(&frame, theme)
         {
+            const double scaleFactor = ui->getScaleFactor() * 1.25;
+            const uint smallFontSize = d_roundToUnsignedInt(theme.fontSize - 1.5 * scaleFactor);
+
             frame.mainWidget.setAlignment(ALIGN_CENTER|ALIGN_BOTTOM);
             frame.mainWidget.setLabel("Re:Nooice");
 
@@ -81,6 +88,9 @@ class ReNooiceUI : public UI,
             sliderThreshold.slider.setValue(60, false);
             sliderThreshold.label.setLabel("Threshold");
 
+            sliderThresholdLabel.label.setCustomFontSize(smallFontSize);
+            sliderThresholdLabel.label.setLabel("Auto-mute if voice detection is lower than this threshold");
+
             sliderGracePeriod.slider.setCallback(ui);
             sliderGracePeriod.slider.setId(kParamGracePeriod);
             sliderGracePeriod.slider.setRange(0, 1000);
@@ -88,6 +98,9 @@ class ReNooiceUI : public UI,
             sliderGracePeriod.slider.setUnitLabel("ms");
             sliderGracePeriod.slider.setValue(0, false);
             sliderGracePeriod.label.setLabel("Grace Period");
+
+            sliderGracePeriodLabel.label.setCustomFontSize(smallFontSize);
+            sliderGracePeriodLabel.label.setLabel("How long auto-mute waits after voice detection falls below threshold");
 
             switchEnableStats.switch_.setCallback(ui);
             switchEnableStats.switch_.setChecked(false, false);
@@ -118,7 +131,9 @@ class ReNooiceUI : public UI,
             items.push_back(&switchEnable);
             items.push_back(&separator1);
             items.push_back(&sliderThreshold);
+            items.push_back(&sliderThresholdLabel);
             items.push_back(&sliderGracePeriod);
+            items.push_back(&sliderGracePeriodLabel);
             items.push_back(&separator2);
             items.push_back(&switchEnableStats);
             items.push_back(&statCurrent);
@@ -141,7 +156,9 @@ class ReNooiceUI : public UI,
             switchEnable.adjustSize();
             separator1.adjustSize(metrics);
             sliderThreshold.adjustSize(metrics);
+            sliderThresholdLabel.adjustSize();
             sliderGracePeriod.adjustSize(metrics);
+            sliderGracePeriodLabel.adjustSize();
             separator2.adjustSize(metrics);
             switchEnableStats.adjustSize();
             statCurrent.adjustSize(metrics);
@@ -149,7 +166,11 @@ class ReNooiceUI : public UI,
             statMinimum.adjustSize(metrics);
             statMaximum.adjustSize(metrics);
 
-            VerticallyStackedHorizontalLayout::adjustSize(theme.padding);
+            Size<uint> size = VerticallyStackedHorizontalLayout::adjustSize(theme.padding);
+            d_stdout("Default size: %ux%u",
+                     size.getWidth() + theme.padding * 2 + theme.borderSize * 2,
+                     frame.getOffset() + size.getHeight() + theme.padding * 4 + theme.borderSize * 2);
+
             VerticallyStackedHorizontalLayout::setAbsolutePos(theme.padding,
                                                               frame.getOffset() + theme.padding,
                                                               theme.padding);
@@ -165,8 +186,10 @@ class ReNooiceUI : public UI,
 
             sliderThreshold.slider.setTextColor(sliderTextColor);
             sliderThreshold.label.setLabelColor(sliderTextColor);
+            sliderThresholdLabel.label.setLabelColor(sliderTextColor);
             sliderGracePeriod.slider.setTextColor(sliderTextColor);
             sliderGracePeriod.label.setLabelColor(sliderTextColor);
+            sliderGracePeriodLabel.label.setLabelColor(sliderTextColor);
 
             statCurrent.meter.setTextColor(statsTextColor);
             statCurrent.label.setLabelColor(statsTextColor);

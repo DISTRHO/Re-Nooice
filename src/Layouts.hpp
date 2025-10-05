@@ -9,6 +9,25 @@
 START_NAMESPACE_DGL
 
 // --------------------------------------------------------------------------------------------------------------------
+// single expanding label
+
+struct QuantumSingleLabel : HorizontalLayout
+{
+    QuantumLabel label;
+
+    explicit QuantumSingleLabel(NanoSubWidget* const parent, const QuantumTheme& theme)
+        : label(parent, theme)
+    {
+        widgets.push_back({ &label, Expanding });
+    }
+
+    void adjustSize()
+    {
+        label.adjustSize();
+    }
+};
+
+// --------------------------------------------------------------------------------------------------------------------
 // single separator line
 
 struct QuantumSingleSeparatorLine : HorizontalLayout
