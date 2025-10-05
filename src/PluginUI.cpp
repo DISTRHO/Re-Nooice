@@ -48,6 +48,7 @@ class ReNooiceUI : public UI,
         QuantumSingleLabel sliderGracePeriodLabel;
         QuantumSingleSeparatorLine separator2;
         QuantumSingleSwitch switchEnableStats;
+        QuantumSingleLabel statsLabel;
         QuantumValueMeterWithLabel statCurrent;
         QuantumValueMeterWithLabel statAverage;
         QuantumValueMeterWithLabel statMinimum;
@@ -64,6 +65,7 @@ class ReNooiceUI : public UI,
               sliderGracePeriodLabel(&frame, theme),
               separator2(&frame, theme),
               switchEnableStats(&frame, theme),
+              statsLabel(&frame, theme),
               statCurrent(&frame, theme),
               statAverage(&frame, theme),
               statMinimum(&frame, theme),
@@ -105,25 +107,28 @@ class ReNooiceUI : public UI,
             switchEnableStats.switch_.setCallback(ui);
             switchEnableStats.switch_.setChecked(false, false);
             switchEnableStats.switch_.setId(kParamEnableStats);
-            switchEnableStats.switch_.setLabel("Enable Stats");
+            switchEnableStats.switch_.setLabel("Enable VAD Stats");
 
-            statCurrent.label.setLabel("VAD Current");
+            statsLabel.label.setCustomFontSize(smallFontSize);
+            statsLabel.label.setLabel("Voice activity detection statistics, running over a period of 2s in round-robin fashion");
+
+            statCurrent.label.setLabel("Current");
             statCurrent.meter.setRange(0, 100);
             statCurrent.meter.setValue(0);
             statCurrent.meter.setValueFormat("%5.1f %%");
 
-            statAverage.label.setLabel("VAD Average");
+            statAverage.label.setLabel("Average");
             statAverage.meter.setRange(0, 100);
             statAverage.meter.setValue(0);
             statAverage.meter.setValueCentered(false);
             statAverage.meter.setValueFormat("%5.1f %%");
 
-            statMinimum.label.setLabel("VAD Minimum");
+            statMinimum.label.setLabel("Minimum");
             statMinimum.meter.setRange(0, 100);
             statMinimum.meter.setValue(100);
             statMinimum.meter.setValueFormat("%5.1f %%");
 
-            statMaximum.label.setLabel("VAD Maximum");
+            statMaximum.label.setLabel("Maximum");
             statMaximum.meter.setRange(0, 100);
             statMaximum.meter.setValue(0);
             statMaximum.meter.setValueFormat("%5.1f %%");
@@ -136,6 +141,7 @@ class ReNooiceUI : public UI,
             items.push_back(&sliderGracePeriodLabel);
             items.push_back(&separator2);
             items.push_back(&switchEnableStats);
+            items.push_back(&statsLabel);
             items.push_back(&statCurrent);
             items.push_back(&statAverage);
             items.push_back(&statMinimum);
@@ -161,6 +167,7 @@ class ReNooiceUI : public UI,
             sliderGracePeriodLabel.adjustSize();
             separator2.adjustSize(metrics);
             switchEnableStats.adjustSize();
+            statsLabel.adjustSize();
             statCurrent.adjustSize(metrics);
             statAverage.adjustSize(metrics);
             statMinimum.adjustSize(metrics);
@@ -191,6 +198,7 @@ class ReNooiceUI : public UI,
             sliderGracePeriod.label.setLabelColor(sliderTextColor);
             sliderGracePeriodLabel.label.setLabelColor(sliderTextColor);
 
+            statsLabel.label.setLabelColor(statsTextColor);
             statCurrent.meter.setTextColor(statsTextColor);
             statCurrent.label.setLabelColor(statsTextColor);
             statAverage.meter.setTextColor(statsTextColor);

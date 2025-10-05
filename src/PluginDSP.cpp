@@ -56,7 +56,7 @@ class ReNooicePlugin : public Plugin
     // denoise statistics
     // mostly just for testing
     struct {
-        float vads[128];
+        float vads[200];
         float avg, min, max;
         int pos;
         bool enabled = false;

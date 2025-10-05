@@ -160,7 +160,7 @@ enum Parameters {
 
    When this macro is defined, the companion DISTRHO_UI_DEFAULT_HEIGHT macro must be defined as well.
  */
-#define DISTRHO_UI_DEFAULT_WIDTH 502
+#define DISTRHO_UI_DEFAULT_WIDTH 612
 
 /**
    Default UI height to use when creating initial and temporary windows.
@@ -171,7 +171,7 @@ enum Parameters {
 
    When this macro is defined, the companion DISTRHO_UI_DEFAULT_WIDTH macro must be defined as well.
  */
-#define DISTRHO_UI_DEFAULT_HEIGHT 398
+#define DISTRHO_UI_DEFAULT_HEIGHT 431
 
 /**
    Whether the %UI uses NanoVG for drawing instead of the default raw OpenGL calls.
