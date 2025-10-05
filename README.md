@@ -16,8 +16,9 @@ Progress so far:
  - [x] Click-free bypass
  - [x] Add "VAD Threshold" alike in [werman/noise-suppression-for-voice](https://github.com/werman/noise-suppression-for-voice)
  - [x] Smooth mute/unmute transition for "VAD Threshold"
- - [ ] Add custom UI
+ - [x] Add custom UI
  - [ ] Dynamic resampling (RNNoise expects 48kHz rate)
- - [ ] More comprehensive README
+ - [ ] More comprehensive UI
+ - [ ] More comprehensive README and documentation
  - [ ] Make a 1.0 release
  - [ ] Package it in KXStudio repositories

@@ -6,8 +6,8 @@
 
 #include "DistrhoUI.hpp"
 
-#include "Layout.hpp"
-#include "Widgets.hpp"
+#include "Layouts.hpp"
+#include "NanoVG.hpp"
 
 START_NAMESPACE_DISTRHO
 
@@ -65,6 +65,9 @@ class ReNooiceUI : public UI,
               statMinimum(&frame, theme),
               statMaximum(&frame, theme)
         {
+            frame.mainWidget.setAlignment(ALIGN_CENTER|ALIGN_BOTTOM);
+            frame.mainWidget.setLabel("Re:Nooice");
+
             switchEnable.switch_.setCallback(ui);
             switchEnable.switch_.setChecked(true, false);
             switchEnable.switch_.setId(kParamBypass);
@@ -132,6 +135,9 @@ class ReNooiceUI : public UI,
             const QuantumMetrics metrics(theme);
 
             frame.setSize(width, height);
+            frame.adjustMainWidgetSize();
+            frame.mainWidget.setWidth(width);
+
             switchEnable.adjustSize();
             separator1.adjustSize(metrics);
             sliderThreshold.adjustSize(metrics);
@@ -144,7 +150,9 @@ class ReNooiceUI : public UI,
             statMaximum.adjustSize(metrics);
 
             VerticallyStackedHorizontalLayout::adjustSize(theme.padding);
-            VerticallyStackedHorizontalLayout::setAbsolutePos(theme.padding, theme.padding, theme.padding);
+            VerticallyStackedHorizontalLayout::setAbsolutePos(theme.padding,
+                                                              frame.getOffset() + theme.padding,
+                                                              theme.padding);
         }
 
         void updateColors()
@@ -194,8 +202,6 @@ protected:
     */
     void parameterChanged(uint32_t index, float value) override
     {
-        // d_stdout("parameterChanged %u %f", index, value);
-
         switch (index)
         {
         case kParamBypass:
