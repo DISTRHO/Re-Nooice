@@ -7,7 +7,6 @@
 #include "DistrhoUI.hpp"
 
 #include "Layouts.hpp"
-#include "NanoVG.hpp"
 
 START_NAMESPACE_DISTRHO
 
