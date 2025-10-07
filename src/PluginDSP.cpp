@@ -457,21 +457,21 @@ protected:
                 // disable (bypass on)
                 else if (d_isNotZero(dryValue.getTargetValue()))
                 {
-                    // copy processed buffer directly into output
-                    ringBufferOut.readCustomData(output, framesCycleF);
-
-                    // retrieve dry buffer (doing nothing with it)
-                    ringBufferDry.readCustomData(bufferOut, framesCycleF);
-                }
-                // enabled (bypass off)
-                else
-               #endif
-                {
                     // copy dry buffer directly into output
                     ringBufferDry.readCustomData(output, framesCycleF);
 
                     // retrieve processed buffer (doing nothing with it)
                     ringBufferOut.readCustomData(bufferOut, framesCycleF);
+                }
+                // enabled (bypass off)
+                else
+               #endif
+                {
+                    // copy processed buffer directly into output
+                    ringBufferOut.readCustomData(output, framesCycleF);
+
+                    // retrieve dry buffer (doing nothing with it)
+                    ringBufferDry.readCustomData(bufferOut, framesCycleF);
                 }
             }
             // capture more audio frames until it fits 1 denoise block
