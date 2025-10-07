@@ -9,6 +9,7 @@
    Stored in a common header file for convenience
  */
 enum Parameters {
+   #ifndef SIMPLIFIED_NOOICE
     kParamBypass,
     kParamThreshold,
     kParamGracePeriod,
@@ -17,6 +18,7 @@ enum Parameters {
     kParamAverageVAD,
     kParamMinimumVAD,
     kParamMaximumVAD,
+   #endif
     kParamCount,
 };
 

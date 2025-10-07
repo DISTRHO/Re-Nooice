@@ -37,6 +37,7 @@ class ReNooicePlugin : public Plugin
     // whether we received enough latent audio frames
     bool processing;
 
+   #ifndef SIMPLIFIED_NOOICE
     // translate Grace Period param (ms) into 48kHz frames
     // updated when param changes
     uint32_t gracePeriodInFrames = 0;
@@ -101,6 +102,7 @@ class ReNooicePlugin : public Plugin
             running = false;
         }
     } stats;
+   #endif
 
 public:
    /**
@@ -110,6 +112,7 @@ public:
     ReNooicePlugin()
         : Plugin(kParamCount, 0, 0) // parameters, programs, states
     {
+       #ifndef SIMPLIFIED_NOOICE
         dryValue.setTimeConstant(0.02f);
         dryValue.setTargetValue(0.f);
 
@@ -118,6 +121,7 @@ public:
 
         parameters[kParamThreshold] = 60.f;
         parameters[kParamMinimumVAD] = 100.f;
+       #endif
 
         // initial sample rate setup
         sampleRateChanged(getSampleRate());
@@ -183,6 +187,7 @@ protected:
         Plugin::initAudioPort(input, index, port);
     }
 
+   #ifndef SIMPLIFIED_NOOICE
    /**
       Initialize the parameter @a index.
       This function will be called once, shortly after the plugin is created.
@@ -291,6 +296,7 @@ protected:
             break;
         }
     }
+   #endif
 
     // ----------------------------------------------------------------------------------------------------------------
     // Audio/MIDI Processing
@@ -309,6 +315,7 @@ protected:
         bufferInPos = 0;
         processing = false;
 
+       #ifndef SIMPLIFIED_NOOICE
         parameters[kParamCurrentVAD] = 0.f;
         parameters[kParamAverageVAD] = 0.f;
         parameters[kParamMinimumVAD] = 100.f;
@@ -320,6 +327,7 @@ protected:
         muteValue.clearToTargetValue();
 
         stats.reset();
+       #endif
     }
 
    /**
@@ -343,6 +351,7 @@ protected:
         const float* input = inputs[0];
         /* */ float* output = outputs[0];
 
+       #ifndef SIMPLIFIED_NOOICE
         // reset stats if enabled status changed
         const bool statsEnabled = parameters[kParamEnableStats] > 0.5f;
         if (stats.enabled != statsEnabled)
@@ -353,6 +362,7 @@ protected:
 
         // pass this threshold to unmute
         const float threshold = parameters[kParamThreshold] * 0.01f;
+       #endif
 
         // process audio a few frames at a time, so it always fits nicely into denoise blocks
         for (uint32_t offset = 0; offset != frames;)
@@ -376,6 +386,14 @@ protected:
                 for (uint32_t i = 0; i < denoiseFrameSize; ++i)
                     bufferIn[i] *= kDenoiseScaling;
 
+               #ifdef SIMPLIFIED_NOOICE
+                // run denoise
+                rnnoise_process_frame(denoise, bufferOut, bufferIn);
+
+                // scale back down to regular audio level
+                for (uint32_t i = 0; i < denoiseFrameSize; ++i)
+                    bufferOut[i] *= kDenoiseScalingInv;
+               #else
                 // run denoise
                 const float vad = rnnoise_process_frame(denoise, bufferOut, bufferIn);
 
@@ -409,6 +427,7 @@ protected:
                     parameters[kParamMinimumVAD] = stats.min * 100.f;
                     parameters[kParamMaximumVAD] = stats.max * 100.f;
                 }
+               #endif
 
                 // write denoise output into ringbuffer
                 ringBufferOut.writeCustomData(bufferOut, denoiseFrameSizeF);
@@ -418,6 +437,7 @@ protected:
             // we have enough audio frames in the ring buffer, can give back audio to host
             if (processing)
             {
+               #ifndef SIMPLIFIED_NOOICE
                 // apply smooth bypass
                 if (d_isNotEqual(dryValue.getCurrentValue(), dryValue.getTargetValue()))
                 {
@@ -434,8 +454,8 @@ protected:
                         output[i] = output[i] * wet + bufferOut[i] * dry;
                     }
                 }
-                // enabled (bypass off)
-                else if (d_isZero(dryValue.getTargetValue()))
+                // disable (bypass on)
+                else if (d_isNotZero(dryValue.getTargetValue()))
                 {
                     // copy processed buffer directly into output
                     ringBufferOut.readCustomData(output, framesCycleF);
@@ -443,8 +463,9 @@ protected:
                     // retrieve dry buffer (doing nothing with it)
                     ringBufferDry.readCustomData(bufferOut, framesCycleF);
                 }
-                // disable (bypass on)
+                // enabled (bypass off)
                 else
+               #endif
                 {
                     // copy dry buffer directly into output
                     ringBufferDry.readCustomData(output, framesCycleF);
@@ -475,8 +496,10 @@ protected:
     */
     void sampleRateChanged(const double sampleRate) override
     {
+       #ifndef SIMPLIFIED_NOOICE
         dryValue.setSampleRate(sampleRate);
         muteValue.setSampleRate(sampleRate);
+       #endif
         setLatency(d_roundToUnsignedInt(sampleRate / 48000.0 * denoiseFrameSize));
     }
 

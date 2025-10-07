@@ -79,6 +79,8 @@ endif
 
 BUILD_CXX_FLAGS += -I../deps/dpf-widgets/opengl
 
+mapi: BUILD_CXX_FLAGS += -DSIMPLIFIED_NOOICE
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Enable all possible plugin types
 
