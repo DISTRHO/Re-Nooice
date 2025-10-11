@@ -12,6 +12,7 @@ all: renooice gen
 
 renooice: models
 	$(MAKE) -C src
+	$(MAKE) -C speex-tests
 
 ifneq ($(CROSS_COMPILING),true)
 gen: renooice deps/dpf/utils/lv2_ttl_generator
@@ -40,12 +41,15 @@ deps/rnnoise/src/rnnoise_data.h:
 # ---------------------------------------------------------------------------------------------------------------------
 
 clean:
+	$(MAKE) clean -C deps/dpf
 	$(MAKE) clean -C deps/dpf/utils/lv2-ttl-generator
 	$(MAKE) clean -C src
 	rm -f deps/rnnoise/src/*.d
 	rm -f deps/rnnoise/src/*.o
 	rm -f deps/rnnoise/src/x86/*.d
 	rm -f deps/rnnoise/src/x86/*.o
+	rm -f deps/speexdsp/libspeexdsp/*.d
+	rm -f deps/speexdsp/libspeexdsp/*.o
 	rm -rf bin build
 
 distclean: clean

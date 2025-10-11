@@ -21,7 +21,7 @@ NAME = ReNooice
 # ---------------------------------------------------------------------------------------------------------------------
 # Directory setup
 
-DPF_BUILD_DIR = ../build
+DPF_BUILD_DIR = ../build/rnnoise
 DPF_TARGET_DIR = ../bin
 RNNOISE_PATH = ../deps/rnnoise
 
